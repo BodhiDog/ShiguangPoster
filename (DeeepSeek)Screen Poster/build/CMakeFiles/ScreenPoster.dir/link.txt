@@ -1,0 +1,3 @@
+D:\Bodhi\Documents\Compiler\mingw64\bin\cmake.exe -E rm -f CMakeFiles\ScreenPoster.dir/objects.a
+D:\Bodhi\Documents\Compiler\mingw64\bin\ar.exe qc CMakeFiles\ScreenPoster.dir/objects.a @CMakeFiles\ScreenPoster.dir\objects1.rsp
+D:\Bodhi\Documents\Compiler\mingw64\bin\c++.exe -O3 -DNDEBUG -mwindows -municode -Wl,--whole-archive CMakeFiles\ScreenPoster.dir/objects.a -Wl,--no-whole-archive -o ScreenPoster.exe -Wl,--out-implib,libScreenPoster.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\ScreenPoster.dir\linkLibs.rsp

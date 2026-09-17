@@ -1,0 +1,73 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="拾光画报" Width="1180" Height="840" MinWidth="980" MinHeight="680" WindowStartupLocation="CenterScreen" Background="#171F1A" Foreground="#E9EEE9" WindowStyle="None" ResizeMode="CanResize" FontFamily="Microsoft YaHei UI" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+  <Border BorderBrush="#344137" BorderThickness="1" Background="#171F1A">
+    <Grid>
+      <Grid.ColumnDefinitions><ColumnDefinition Width="196"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <Border Background="#121A15" BorderBrush="#2B372E" BorderThickness="0,0,1,0">
+        <Grid Margin="18,0">
+          <Grid.RowDefinitions><RowDefinition Height="130"/><RowDefinition Height="*"/><RowDefinition Height="138"/></Grid.RowDefinitions>
+          <StackPanel Margin="12,32,0,0">
+            <StackPanel Orientation="Horizontal">
+              <Border Width="36" Height="36" CornerRadius="11" Background="#B8D7B4" Margin="0,0,12,0"><Viewbox Margin="8"><Path Data="M2,20 L2,5 Q10,1 15,6 Q20,1 28,5 L28,20 Q20,16 15,21 Q10,16 2,20 M15,6 L15,21" Stroke="#243E2A" StrokeThickness="2" StrokeLineJoin="Round"/></Viewbox></Border>
+              <TextBlock Text="拾光画报" FontSize="20" VerticalAlignment="Center" FontWeight="SemiBold"/>
+            </StackPanel>
+            <TextBlock Text="A MOMENT OF STILLNESS" FontFamily="Segoe UI" FontSize="8.5" Foreground="#839D88" Margin="0,14,0,0"/>
+          </StackPanel>
+          <StackPanel Grid.Row="1">
+            <TextBlock Text="你的风景" Style="{StaticResource MutedText}" Margin="16,0,0,13"/>
+            <Button x:Name="NavExplore" Style="{StaticResource NavButton}" Tag="active"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,13,0" VerticalAlignment="Center"/><TextBlock Text="画报精选" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></StackPanel></Button>
+            <Button x:Name="NavAlbums" Style="{StaticResource NavButton}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,13,0" VerticalAlignment="Center"/><TextBlock Text="我的相册" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></StackPanel></Button>
+            <Button x:Name="NavFavorites" Style="{StaticResource NavButton}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xEB51;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,13,0" VerticalAlignment="Center"/><TextBlock Text="我的收藏" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></StackPanel></Button>
+            <Border Height="1" Background="#2B372E" Margin="14,22,14,18"/>
+            <Button x:Name="NavSettings" Style="{StaticResource NavButton}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,13,0" VerticalAlignment="Center"/><TextBlock Text="屏保设置" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></StackPanel></Button>
+          </StackPanel>
+          <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="10,0,10,25">
+            <Border CornerRadius="9" Background="#1E2D22" Padding="13,12" Margin="0,0,0,20"><StackPanel><StackPanel Orientation="Horizontal"><Ellipse Width="6" Height="6" Fill="#A8CF9F" Margin="0,0,8,0"/><TextBlock x:Name="LibraryCount" Text="3 张风景，随时出发" FontSize="11" Foreground="#B0C3AF"/></StackPanel><TextBlock Text="给忙碌一点留白" FontSize="11" Foreground="#7F9784" Margin="14,7,0,0"/></StackPanel></Border>
+            <TextBlock Text="拾光 1.0  /  自在看风景" FontSize="10" Foreground="#657D6B"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+      <Grid Grid.Column="1">
+        <Grid.RowDefinitions><RowDefinition Height="47"/><RowDefinition Height="*"/><RowDefinition Height="34"/></Grid.RowDefinitions>
+        <Grid x:Name="TitleBar" Background="Transparent" Margin="25,0,10,0">
+          <TextBlock Text="SHIGUANG  /  让美好，自然发生" FontFamily="Microsoft YaHei UI" FontSize="10" Foreground="#768B7D" VerticalAlignment="Center"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="MinimizeButton" Style="{StaticResource GhostButton}" Content="&#xE921;" FontFamily="Segoe MDL2 Assets" Width="40" Padding="0" ToolTip="最小化"/><Button x:Name="MaximizeButton" Style="{StaticResource GhostButton}" Content="&#xE922;" FontFamily="Segoe MDL2 Assets" Width="40" Padding="0" ToolTip="最大化 / 还原"/><Button x:Name="CloseButton" Style="{StaticResource GhostButton}" Content="&#xE8BB;" FontFamily="Segoe MDL2 Assets" Width="40" Padding="0" ToolTip="关闭"/></StackPanel>
+        </Grid>
+        <ScrollViewer x:Name="ContentScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="32,14,32,22">
+          <StackPanel>
+            <Grid Margin="0,0,0,25">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel><TextBlock x:Name="PageEyebrow" Text="EXPLORE THE QUIET" Foreground="#A8C6A4" FontFamily="Segoe UI" FontSize="10" Margin="0,0,0,10"/><TextBlock x:Name="PageTitle" Text="让屏幕，成为一扇窗。" FontSize="28" FontWeight="SemiBold"/><TextBlock x:Name="PageSubtitle" Text="慢下来，看见生活之外的风景。" Foreground="#94A699" FontSize="12" Margin="0,9,0,0"/></StackPanel>
+              <Button x:Name="PreviewButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" VerticalAlignment="Center" Margin="15,0,0,0" Padding="18,11"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Foreground="#203325" Margin="0,0,9,0" VerticalAlignment="Center"/><TextBlock Text="预览屏保" Foreground="#203325" FontWeight="SemiBold"/></StackPanel></Button>
+            </Grid>
+            <StackPanel x:Name="GalleryPage">
+              <Border x:Name="HeroSection" CornerRadius="14" Height="270" Margin="0,0,0,23" Background="#364940">
+                <Grid>
+                  <Border CornerRadius="14"><Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#100B201C" Offset="0"/><GradientStop Color="#150B201C" Offset="0.45"/><GradientStop Color="#CE0B1A13" Offset="1"/></LinearGradientBrush></Border.Background></Border>
+                  <Border Background="#50303D2E" CornerRadius="11" Padding="11,5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24"><TextBlock Text="今日 · 给自己片刻远方" FontSize="10" Foreground="#F2F4E9"/></Border>
+                  <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,24,27,0"><TextBlock x:Name="HeroClock" Text="16:28" FontSize="36" FontWeight="Light" FontFamily="Segoe UI" Foreground="#F5F6ED" HorizontalAlignment="Right"/><TextBlock x:Name="HeroDate" Text="星期四 · 9 月 17 日" Foreground="#E0E8DF" FontSize="10" HorizontalAlignment="Right"/></StackPanel>
+                  <Grid VerticalAlignment="Bottom" Margin="26,0,25,24"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock x:Name="HeroCategory" Text="山野  /  拾光原创" FontSize="10" Foreground="#D9E5CE" Margin="0,0,0,7"/><TextBlock x:Name="HeroTitle" Text="山有回响" FontSize="30" Foreground="#FFFFFF" FontWeight="SemiBold"/><TextBlock x:Name="HeroDescription" Text="把片刻留给远山，把心事交给云海。" Foreground="#D6E0D6" FontSize="12" Margin="0,9,0,0"/></StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom"><Button x:Name="HeroFavorite" Content="♡" FontSize="21" Padding="0" Width="38" Height="38" Background="#502E3E32" BorderBrush="#70849877" Margin="0,0,8,0" ToolTip="收藏这张画报"/><Button x:Name="HeroOpen" Content="沉浸欣赏  ↗" Padding="14,9" Background="#EAECEFE2" Foreground="#203325" BorderBrush="Transparent"/></StackPanel>
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border x:Name="AlbumTools" Style="{StaticResource SettingsCard}" Visibility="Collapsed">
+                <StackPanel><DockPanel><Button x:Name="AddFolderButton" DockPanel.Dock="Right" Content="＋  添加照片文件夹" Style="{StaticResource PrimaryButton}"/><StackPanel><TextBlock Text="把自己的回忆，放进画报" FontSize="16" Margin="0,0,0,6"/><TextBlock Text="支持 JPG、PNG、BMP、TIFF；直接读取原图位置。" Style="{StaticResource MutedText}"/></StackPanel></DockPanel><StackPanel x:Name="FolderList" Margin="0,15,0,0"/></StackPanel>
+              </Border>
+              <Grid Margin="0,0,0,17"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="GalleryTitle" Text="发现风景" FontSize="17" FontWeight="SemiBold"/><TextBlock x:Name="GalleryCount" Text="03" FontFamily="Segoe UI" Foreground="#7C9784" FontSize="12" Margin="10,3,0,0"/></StackPanel><Button x:Name="RefreshButton" Grid.Column="1" Content="↻  刷新画报" Style="{StaticResource GhostButton}" FontSize="11" Padding="8,5" Foreground="#A6BDA7"/></Grid>
+              <StackPanel x:Name="CategoryFilters" Orientation="Horizontal" Margin="0,0,0,19">
+                <RadioButton x:Name="FilterAll" GroupName="Category" Content="全部" Style="{StaticResource Chip}" IsChecked="True"/><RadioButton x:Name="FilterMountain" GroupName="Category" Content="山野" Style="{StaticResource Chip}"/><RadioButton x:Name="FilterCoast" GroupName="Category" Content="海岸" Style="{StaticResource Chip}"/><RadioButton x:Name="FilterDesert" GroupName="Category" Content="旷野" Style="{StaticResource Chip}"/><RadioButton x:Name="FilterDaily" GroupName="Category" Content="每日壁纸" Style="{StaticResource Chip}"/>
+              </StackPanel>
+              <WrapPanel x:Name="PhotoGrid"/>
+              <Border x:Name="EmptyState" Style="{StaticResource SettingsCard}" Visibility="Collapsed" Padding="28,35"><StackPanel><TextBlock x:Name="EmptyTitle" Text="留一个位置，给喜欢的风景" FontSize="19" HorizontalAlignment="Center"/><TextBlock x:Name="EmptyDescription" Text="点击画报上的爱心，就能在这里找到它。" Style="{StaticResource MutedText}" HorizontalAlignment="Center" Margin="0,12,0,0"/></StackPanel></Border>
+              <Button x:Name="LoadMoreButton" Content="查看更多风景" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,14,0,0"/>
+              <TextBlock x:Name="GalleryFootnote" Text="原创风景 · 离线可用    /    选一处风景，让思绪休息一下" FontSize="10" Foreground="#758C7B" Margin="0,10,0,0"/>
+            </StackPanel>
+            <StackPanel x:Name="SettingsPage" Visibility="Collapsed"/>
+          </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="2" Background="#151D18" BorderBrush="#2A382E" BorderThickness="0,1,0,0" Padding="31,0"><DockPanel VerticalAlignment="Center"><TextBlock Text="按 Esc 退出预览  ·  ← → 切换画报" DockPanel.Dock="Right" FontSize="10" Foreground="#6E8475"/><TextBlock x:Name="StatusText" Text="已就绪 · 让风景陪你片刻" Foreground="#98B39C" FontSize="10" TextTrimming="CharacterEllipsis"/></DockPanel></Border>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
