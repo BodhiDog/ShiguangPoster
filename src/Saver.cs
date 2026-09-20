@@ -58,6 +58,7 @@ namespace Shiguang
         private readonly Window owner;
         private readonly List<Window> windows = new List<Window>();
         private readonly List<PosterView> views = new List<PosterView>();
+        private readonly HashSet<Window> backgroundPresses = new HashSet<Window>();
         private SlideDeck deck;
         private Photo displayedPhoto;
         private readonly DispatcherTimer timer;
@@ -65,8 +66,8 @@ namespace Shiguang
         private readonly CancellationTokenSource lifetime = new CancellationTokenSource();
         private List<Photo> pendingPlaylist;
         private double lastTick, slideElapsed, lastMouseTime;
-        private bool stopped, paused, changing, cursorReady;
-        private Native.POINT initialMouse;
+        private bool stopped, paused, changing;
+        private bool ExitByBlankClick { get { return settings.ExitMode == Settings.ExitWithBlankClick; } }
         public event Action Finished;
         internal Photo DisplayedPhoto { get { return displayedPhoto; } }
         internal bool IsPaused { get { return paused; } }
@@ -85,10 +86,20 @@ namespace Shiguang
                 foreach (Forms.Screen screen in screens)
                 {
                     PosterView view = new PosterView(settings, interactive); views.Add(view);
-                    Window window = new Window { Title = "拾光画报 · " + (interactive ? "沉浸预览" : "屏幕保护"), WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, ShowInTaskbar = false, Topmost = true, Background = Brushes.Black, Content = view, Cursor = interactive ? Cursors.Arrow : Cursors.None, Left = screen.Bounds.Left, Top = screen.Bounds.Top, Width = screen.Bounds.Width, Height = screen.Bounds.Height };
+                    Window window = new Window { Title = "拾光画报 · " + (interactive ? "沉浸预览" : "屏幕保护"), WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, ShowInTaskbar = false, Topmost = true, Background = Brushes.Black, Content = view, Cursor = interactive || ExitByBlankClick ? Cursors.Arrow : Cursors.None, Left = screen.Bounds.Left, Top = screen.Bounds.Top, Width = screen.Bounds.Width, Height = screen.Bounds.Height };
                     window.PreviewKeyDown += OnKey;
-                    window.MouseMove += delegate { if (interactive) { lastMouseTime = elapsed.Elapsed.TotalSeconds; foreach (PosterView item in views) item.Controls.Opacity = 1; foreach (Window item in windows) item.Cursor = Cursors.Arrow; } };
-                    window.PreviewMouseDown += delegate { if (!interactive && elapsed.Elapsed.TotalSeconds > 0.6) Stop(); };
+                    window.MouseMove += delegate
+                    {
+                        if (interactive || ExitByBlankClick)
+                        {
+                            lastMouseTime = elapsed.Elapsed.TotalSeconds;
+                            foreach (PosterView item in views) { item.Controls.Opacity = 1; item.Controls.IsHitTestVisible = true; }
+                            foreach (Window item in windows) item.Cursor = Cursors.Arrow;
+                        }
+                    };
+                    window.PreviewMouseDown += OnMouseDown;
+                    window.PreviewMouseUp += OnMouseUp;
+                    window.Deactivated += delegate { backgroundPresses.Remove(window); };
                     window.Closed += delegate { if (!stopped) Stop(); };
                     Forms.Screen target = screen;
                     window.SourceInitialized += delegate { Native.SetWindowPos(new WindowInteropHelper(window).Handle, new IntPtr(-1), target.Bounds.Left, target.Bounds.Top, target.Bounds.Width, target.Bounds.Height, 0x0010 | 0x0040); };
@@ -170,32 +181,46 @@ namespace Shiguang
             double delta = now - lastTick; lastTick = now;
             if (!paused && !changing) slideElapsed += delta;
             foreach (PosterView view in views) { view.UpdateClock(DateTime.Now); view.SetProgress(slideElapsed / settings.IntervalSeconds); }
-            if (!interactive && settings.ExitOnMouseMove)
+            if ((interactive || ExitByBlankClick) && now - lastMouseTime > 5)
             {
-                Native.POINT point;
-                if (Native.GetCursorPos(out point))
-                {
-                    if (!cursorReady || now < 1.2) { initialMouse = point; cursorReady = true; }
-                    else if (Math.Abs(point.X - initialMouse.X) + Math.Abs(point.Y - initialMouse.Y) > 8) { Stop(); return; }
-                }
-            }
-            if (interactive && now - lastMouseTime > 5)
-            {
-                foreach (PosterView view in views) if (!view.Controls.IsMouseOver && !view.Controls.IsKeyboardFocusWithin) view.Controls.Opacity = 0;
+                foreach (PosterView view in views)
+                    if (!view.Controls.IsMouseOver && !view.Controls.IsKeyboardFocusWithin) { view.Controls.Opacity = 0; view.Controls.IsHitTestVisible = false; }
                 foreach (Window window in windows) window.Cursor = Cursors.None;
             }
             if (slideElapsed >= settings.IntervalSeconds && !paused && !changing) await Change(1, false);
         }
         private async void OnKey(object sender, KeyEventArgs e)
         {
-            if (!interactive) { Stop(); e.Handled = true; return; }
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                if (!ExitByBlankClick) Stop();
+                return;
+            }
+            if (!interactive) return;
             e.Handled = true;
-            if (e.Key == Key.Escape) Stop();
-            else if (e.Key == Key.Right || e.Key == Key.Down) await Change(1, false);
+            if (e.Key == Key.Right || e.Key == Key.Down) await Change(1, false);
             else if (e.Key == Key.Left || e.Key == Key.Up) await Change(-1, false);
             else if (e.Key == Key.Space) TogglePause();
             else if (e.Key == Key.F) ToggleFavorite();
             else e.Handled = false;
+        }
+        private bool IsBackgroundClick(Window window, MouseButtonEventArgs e)
+        {
+            PosterView view = window.Content as PosterView;
+            return ExitByBlankClick && e.ChangedButton == MouseButton.Left && elapsed.Elapsed.TotalSeconds > 0.6
+                && view != null && !view.IsControlInteraction(e.OriginalSource as DependencyObject);
+        }
+        private void OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Window window = (Window)sender;
+            backgroundPresses.Remove(window);
+            if (IsBackgroundClick(window, e)) backgroundPresses.Add(window);
+        }
+        private void OnMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Window window = (Window)sender;
+            if (backgroundPresses.Remove(window) && IsBackgroundClick(window, e)) { e.Handled = true; Stop(); }
         }
         private void TogglePause() { paused = !paused; foreach (PosterView view in views) view.SetPaused(paused); }
         private void ToggleFavorite()
@@ -214,6 +239,7 @@ namespace Shiguang
         {
             if (stopped) return;
             stopped = true; timer.Stop(); elapsed.Stop(); lifetime.Cancel(); SystemEvents.DisplaySettingsChanged -= DisplaysChanged;
+            backgroundPresses.Clear();
             foreach (Window window in windows.ToArray()) window.Close();
             if (Finished != null) Finished();
             if (owner != null) { owner.Show(); owner.Activate(); }

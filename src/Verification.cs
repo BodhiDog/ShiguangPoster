@@ -31,12 +31,19 @@ namespace Shiguang
                 Check("configuration handles are accepted", LaunchOptions.Parse(new[] { "/C:123" }).Mode == "config");
                 Settings bad = new Settings { IntervalSeconds = -3, Brightness = 500, ClockPosition = "invalid", LocalFolders = null, Favorites = null }; bad.Normalize();
                 Check("settings are bounded and normalized", bad.IntervalSeconds == 10 && bad.Brightness == 100 && bad.ClockPosition == "left" && bad.LocalFolders.Count == 0);
+                Check("default exit mode is Escape", new Settings().ExitMode == Settings.ExitWithEscape);
+                bad.ExitMode = "invalid"; bad.Normalize();
+                Check("invalid exit mode falls back to Escape", bad.ExitMode == Settings.ExitWithEscape);
                 AppStore testStore = new AppStore(Path.Combine(output, "test-data"));
-                Settings saved = new Settings { IntervalSeconds = 120, ShowClock = false, Shuffle = true }; saved.Favorites.Add("builtin:mountain-dawn"); testStore.Save(saved);
+                Settings saved = new Settings { IntervalSeconds = 120, ShowClock = false, Shuffle = true, ExitMode = Settings.ExitWithBlankClick }; saved.Favorites.Add("builtin:mountain-dawn"); testStore.Save(saved);
                 Settings reloaded = testStore.LoadSettings();
                 Check("settings persist and round-trip", reloaded.IntervalSeconds == 120 && !reloaded.ShowClock && reloaded.Shuffle && reloaded.Favorites.Count == 1);
+                Check("blank-click exit mode persists after reload", reloaded.ExitMode == Settings.ExitWithBlankClick);
                 saved.IntervalSeconds = 45; testStore.Save(saved);
                 Check("atomic replacement updates existing settings", testStore.LoadSettings().IntervalSeconds == 45);
+                File.WriteAllText(testStore.FilePath("settings.json"), "{\"Version\":1,\"IntervalSeconds\":120,\"ExitOnMouseMove\":true}");
+                Settings legacy = testStore.LoadSettings();
+                Check("legacy mouse-move settings migrate without losing preferences", legacy.ExitMode == Settings.ExitWithEscape && legacy.Version == 2 && legacy.IntervalSeconds == 120);
                 File.WriteAllText(testStore.FilePath("settings.json"), "{broken");
                 Check("corrupt settings fall back without crashing", testStore.LoadSettings().IntervalSeconds == 45 && testStore.Warning != null);
                 Check("corrupt settings are backed up", Directory.GetFiles(testStore.Root, "settings.invalid-*.json").Length > 0);
@@ -90,11 +97,23 @@ namespace Shiguang
                 Check("album empty state is visible", Ui.Find<Border>(controller.Window, "EmptyState").Visibility == Visibility.Visible);
                 controller.Navigate("settings"); Ui.Snapshot((FrameworkElement)controller.Window.Content, Path.Combine(output, "settings.png"), 1180, 840);
                 Check("settings page renders all groups", Ui.Find<StackPanel>(controller.Window, "SettingsPage").Children.Count == 5);
+                ComboBox exitChoice = Descendants<ComboBox>(Ui.Find<StackPanel>(controller.Window, "SettingsPage"))
+                    .First(c => System.Windows.Automation.AutomationProperties.GetName(c) == "退出屏保方式");
+                exitChoice.SelectedIndex = 1;
+                Check("exit choice saves and updates the on-screen hint", store.LoadSettings().ExitMode == Settings.ExitWithBlankClick && Ui.Find<TextBlock>(controller.Window, "ExitShortcutHint").Text.Contains("点击空白位置"));
+                Ui.Find<ScrollViewer>(controller.Window, "ContentScroll").ScrollToVerticalOffset(530);
+                Ui.Snapshot((FrameworkElement)controller.Window.Content, Path.Combine(output, "exit-settings.png"), 1180, 840);
+                exitChoice.SelectedIndex = 0;
                 controller.Navigate("explore"); Ui.Snapshot((FrameworkElement)controller.Window.Content, Path.Combine(output, "home-compact.png"), 980, 680);
                 controller.Window.Close();
                 PosterView poster = new PosterView(clean, true); poster.Display(builtin[0], ImageLoader.Load(builtin[0], 1920), 0, 3, false); poster.UpdateClock(new DateTime(2026, 9, 17, 16, 28, 0));
                 Ui.Snapshot(poster, Path.Combine(output, "screensaver.png"), 1600, 900);
                 Check("full-screen poster renders", File.Exists(Path.Combine(output, "screensaver.png")));
+                PosterView clickPoster = new PosterView(new Settings { ExitMode = Settings.ExitWithBlankClick }, true);
+                clickPoster.Display(builtin[1], ImageLoader.Load(builtin[1], 1920), 1, 3, false);
+                Ui.Snapshot(clickPoster, Path.Combine(output, "blank-click-screensaver.png"), 1600, 900);
+                TextBlock buttonContent = Descendants<TextBlock>(clickPoster.NextButton).First();
+                Check("blank-click exit excludes button content and hides the Escape button", clickPoster.IsControlInteraction(buttonContent) && !clickPoster.IsControlInteraction(clickPoster.Children[1]) && clickPoster.CloseButton.Visibility == Visibility.Collapsed);
                 Results.Add("All " + Results.Count + " checks passed. No system screen saver settings were changed.");
                 File.WriteAllLines(Path.Combine(output, "verification.txt"), Results, new UTF8Encoding(false)); return 0;
             }
@@ -138,6 +157,32 @@ namespace Shiguang
         {
             window.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window), Environment.TickCount, key) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
         }
+        private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(root, i);
+                T match = child as T; if (match != null) yield return match;
+                foreach (T nested in Descendants<T>(child)) yield return nested;
+            }
+        }
+        private static void MouseEvent(UIElement target, RoutedEvent routedEvent, MouseButton button)
+        {
+            target.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, button) { RoutedEvent = routedEvent });
+        }
+        private static void ClickArea(UIElement target, MouseButton button)
+        {
+            MouseEvent(target, Mouse.PreviewMouseDownEvent, button);
+            MouseEvent(target, Mouse.PreviewMouseUpEvent, button);
+        }
+        private static void MoveMouse(Window window)
+        {
+            window.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount) { RoutedEvent = Mouse.MouseMoveEvent });
+        }
+        private static void AssertRunning(SaverSession session, string message)
+        {
+            if (!session.FirstWindow.IsVisible) throw new InvalidOperationException(message);
+        }
         public static int Smoke(Application app, AppStore store, Settings settings, string output)
         {
             Directory.CreateDirectory(output);
@@ -161,7 +206,7 @@ namespace Shiguang
                     else if (stage == 3)
                     {
                         preview.Dispose(); preview = null; host.Dispose(); host = null;
-                        settings.AllMonitors = true; settings.ExitOnMouseMove = false;
+                        settings.AllMonitors = true; settings.ExitMode = Settings.ExitWithEscape;
                         session = new SaverSession(store, settings, PhotoCatalog.BuiltIn(), true, controller.Window, null); session.Start();
                     }
                     else if (stage == 4)
@@ -177,6 +222,10 @@ namespace Shiguang
                         if (session.DisplayedPhoto.Id != "builtin:quiet-coast") throw new InvalidOperationException("Next-photo key did not change the image.");
                         Press(session.FirstWindow, Key.Space);
                         if (!session.IsPaused) throw new InvalidOperationException("Pause key did not pause playback.");
+                        Press(session.FirstWindow, Key.A);
+                        ClickArea((PosterView)session.FirstWindow.Content, MouseButton.Left);
+                        MoveMouse(session.FirstWindow);
+                        AssertRunning(session, "Escape mode exited on a non-Escape input during preview.");
                         Press(session.FirstWindow, Key.Escape);
                     }
                     else if (stage == 6)
@@ -188,11 +237,57 @@ namespace Shiguang
                     {
                         if (session.DisplayedPhoto == null) throw new InvalidOperationException("System saver did not render.");
                         Press(session.FirstWindow, Key.A);
+                        ClickArea((PosterView)session.FirstWindow.Content, MouseButton.Left);
+                        MoveMouse(session.FirstWindow);
+                        AssertRunning(session, "Escape mode exited on typing, mouse movement or background clicks.");
+                        Press(session.FirstWindow, Key.Escape);
                     }
                     else if (stage == 8)
                     {
-                        if (!controller.Window.IsVisible) throw new InvalidOperationException("System saver did not exit on keyboard input.");
-                        File.WriteAllText(Path.Combine(output, "smoke-test.txt"), "PASS: native window, settings page, embedded preview, all monitor windows, fullscreen image rendering, next-photo key, pause key, ESC return, and system-saver keyboard exit. No screen saver registration was changed.", Encoding.UTF8);
+                        if (!controller.Window.IsVisible) throw new InvalidOperationException("System saver did not exit on Escape.");
+                        settings.ExitMode = Settings.ExitWithBlankClick;
+                        session = new SaverSession(store, settings, PhotoCatalog.BuiltIn(), true, controller.Window, null); session.Start();
+                    }
+                    else if (stage == 9)
+                    {
+                        PosterView view = (PosterView)session.FirstWindow.Content;
+                        Press(session.FirstWindow, Key.Escape);
+                        ClickArea(Descendants<TextBlock>(view.NextButton).First(), MouseButton.Left);
+                        AssertRunning(session, "Blank-click mode exited on Escape or clicking button content.");
+                        view.NextButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    }
+                    else if (stage == 10)
+                    {
+                        if (session.DisplayedPhoto.Id != "builtin:quiet-coast") throw new InvalidOperationException("Button interaction failed in blank-click mode.");
+                        PosterView view = (PosterView)session.FirstWindow.Content;
+                        MouseEvent(view.NextButton, Mouse.PreviewMouseDownEvent, MouseButton.Left);
+                        MouseEvent(view, Mouse.PreviewMouseUpEvent, MouseButton.Left);
+                        MouseEvent(view, Mouse.PreviewMouseDownEvent, MouseButton.Left);
+                        MouseEvent(view.NextButton, Mouse.PreviewMouseUpEvent, MouseButton.Left);
+                        ClickArea(view, MouseButton.Right);
+                        MoveMouse(session.FirstWindow);
+                        AssertRunning(session, "Dragging between controls and background, right-clicking or mouse movement exited the saver.");
+                        ClickArea(view, MouseButton.Left);
+                    }
+                    else if (stage == 11)
+                    {
+                        if (!controller.Window.IsVisible) throw new InvalidOperationException("Blank-click preview did not return to the main window.");
+                        session = new SaverSession(store, settings, PhotoCatalog.BuiltIn(), false, controller.Window, null); session.Start();
+                    }
+                    else if (stage == 12)
+                    {
+                        PosterView view = (PosterView)session.FirstWindow.Content;
+                        Press(session.FirstWindow, Key.Escape); Press(session.FirstWindow, Key.A);
+                        ClickArea(view, MouseButton.Right);
+                        session.FirstWindow.Cursor = Cursors.None; MoveMouse(session.FirstWindow);
+                        AssertRunning(session, "Blank-click system saver exited before a left background click.");
+                        if (session.FirstWindow.Cursor != Cursors.Arrow) throw new InvalidOperationException("Mouse movement did not restore the cursor.");
+                        ClickArea(view, MouseButton.Left);
+                    }
+                    else if (stage == 13)
+                    {
+                        if (!controller.Window.IsVisible) throw new InvalidOperationException("Blank-click system saver did not exit.");
+                        File.WriteAllText(Path.Combine(output, "smoke-test.txt"), "PASS: native window, settings page, embedded preview, all monitor windows, fullscreen rendering, navigation and pause. Both preview and automatic saver honor Escape-only and left background-click exit modes; other keys, mouse movement, right clicks, button descendants and drag releases do not accidentally exit. No screen saver registration was changed.", Encoding.UTF8);
                         timer.Stop(); controller.Window.Close(); app.Shutdown();
                     }
                 }

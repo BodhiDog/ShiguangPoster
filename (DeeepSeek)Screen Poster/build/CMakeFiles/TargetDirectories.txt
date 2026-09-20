@@ -1,3 +1,0 @@
-D:/CodeLab/Windows/Screen Poster/build/CMakeFiles/ScreenPoster.dir
-D:/CodeLab/Windows/Screen Poster/build/CMakeFiles/edit_cache.dir
-D:/CodeLab/Windows/Screen Poster/build/CMakeFiles/rebuild_cache.dir

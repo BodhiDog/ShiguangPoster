@@ -10,6 +10,8 @@ namespace Shiguang
 {
     public sealed class Settings
     {
+        public const string ExitWithEscape = "escape";
+        public const string ExitWithBlankClick = "blank-click";
         public int Version { get; set; }
         public int IntervalSeconds { get; set; }
         public bool ShowClock { get; set; }
@@ -18,7 +20,7 @@ namespace Shiguang
         public bool Hour12 { get; set; }
         public bool Fade { get; set; }
         public bool Shuffle { get; set; }
-        public bool ExitOnMouseMove { get; set; }
+        public string ExitMode { get; set; }
         public bool AllMonitors { get; set; }
         public bool OnlineEnabled { get; set; }
         public bool IncludeBuiltIn { get; set; }
@@ -31,14 +33,17 @@ namespace Shiguang
         public List<string> Favorites { get; set; }
         public Settings()
         {
-            Version = 1; IntervalSeconds = 45; Brightness = 90;
-            ShowClock = ShowDate = ShowQuote = Fade = ExitOnMouseMove = AllMonitors = true;
+            Version = 2; IntervalSeconds = 45; Brightness = 90;
+            ShowClock = ShowDate = ShowQuote = Fade = AllMonitors = true;
+            ExitMode = ExitWithEscape;
             IncludeBuiltIn = IncludeLocal = IncludeSubfolders = true;
             ClockPosition = "left";
             LocalFolders = new List<string>(); Favorites = new List<string>();
         }
         public void Normalize()
         {
+            Version = 2;
+            if (ExitMode != ExitWithBlankClick) ExitMode = ExitWithEscape;
             IntervalSeconds = Math.Max(10, Math.Min(3600, IntervalSeconds));
             Brightness = Math.Max(30, Math.Min(100, Brightness));
             if (ClockPosition != "center") ClockPosition = "left";

@@ -66,7 +66,7 @@ namespace Shiguang
                 if (settings.OnlineEnabled && !photos.Any(p => p.Source == "online" && p.Date == DateTime.Now.ToString("yyyyMMdd"))) await RefreshOnline();
             };
             Window.PreviewKeyDown += delegate(object sender, KeyEventArgs e) { if (e.Key == Key.F5) { e.Handled = true; Preview(null); } };
-            SetHero(hero); Navigate("explore"); UpdateClock();
+            SetHero(hero); Navigate("explore"); UpdateClock(); UpdateExitHint();
             if (!String.IsNullOrEmpty(store.Warning)) Status(store.Warning);
         }
         private Button B(string name) { return Ui.Find<Button>(Window, name); }
@@ -74,6 +74,10 @@ namespace Shiguang
         private void Show(string name, bool visible) { Ui.Find<UIElement>(Window, name).Visibility = visible ? Visibility.Visible : Visibility.Collapsed; }
         private void ToggleMaximize() { Window.WindowState = Window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; }
         public void Status(string text) { T("StatusText").Text = text; }
+        private void UpdateExitHint()
+        {
+            T("ExitShortcutHint").Text = (settings.ExitMode == Settings.ExitWithBlankClick ? "点击空白位置退出预览" : "按 Esc 退出预览") + "  ·  ← → 切换画报";
+        }
         public void Navigate(string destination)
         {
             page = destination; visibleCount = 24;

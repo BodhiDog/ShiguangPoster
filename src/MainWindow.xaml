@@ -66,7 +66,7 @@
             <StackPanel x:Name="SettingsPage" Visibility="Collapsed"/>
           </StackPanel>
         </ScrollViewer>
-        <Border Grid.Row="2" Background="#151D18" BorderBrush="#2A382E" BorderThickness="0,1,0,0" Padding="31,0"><DockPanel VerticalAlignment="Center"><TextBlock Text="按 Esc 退出预览  ·  ← → 切换画报" DockPanel.Dock="Right" FontSize="10" Foreground="#6E8475"/><TextBlock x:Name="StatusText" Text="已就绪 · 让风景陪你片刻" Foreground="#98B39C" FontSize="10" TextTrimming="CharacterEllipsis"/></DockPanel></Border>
+        <Border Grid.Row="2" Background="#151D18" BorderBrush="#2A382E" BorderThickness="0,1,0,0" Padding="31,0"><DockPanel VerticalAlignment="Center"><TextBlock x:Name="ExitShortcutHint" Text="按 Esc 退出预览  ·  ← → 切换画报" DockPanel.Dock="Right" FontSize="10" Foreground="#6E8475"/><TextBlock x:Name="StatusText" Text="已就绪 · 让风景陪你片刻" Foreground="#98B39C" FontSize="10" TextTrimming="CharacterEllipsis"/></DockPanel></Border>
       </Grid>
     </Grid>
   </Border>

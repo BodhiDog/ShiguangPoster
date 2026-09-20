@@ -68,7 +68,9 @@ namespace Shiguang
             SettingRow(playback, "柔和过渡", "用淡入淡出衔接两处风景。", Switch(settings.Fade, v => settings.Fade = v));
             SettingRow(playback, "随机播放", "打乱顺序，完整播放后再开启下一轮。", Switch(settings.Shuffle, v => settings.Shuffle = v));
             SettingRow(playback, "所有显示器", "每块屏幕同步呈现同一张画报。", Switch(settings.AllMonitors, v => settings.AllMonitors = v));
-            SettingRow(playback, "移动鼠标退出", "适用于系统自动启动的屏保；键盘和点击始终可退出。", Switch(settings.ExitOnMouseMove, v => settings.ExitOnMouseMove = v));
+            SettingRow(playback, "退出屏保方式", "适用于全屏预览和自动屏保；空白区域指图片、文字等非操作按钮区域。",
+                Choice(new[] { "按退出键（Esc）退出", "鼠标点击屏保空白位置退出" }, settings.ExitMode == Settings.ExitWithBlankClick ? 1 : 0,
+                    i => { settings.ExitMode = i == 1 ? Settings.ExitWithBlankClick : Settings.ExitWithEscape; UpdateExitHint(); }));
 
             StackPanel overlay = SettingsCard("画面里的小细节", "让时间和文字，以你喜欢的方式出现。");
             SettingRow(overlay, "显示时钟", "简洁大字，轻轻看一眼就好。", Switch(settings.ShowClock, v => settings.ShowClock = v));
@@ -91,7 +93,7 @@ namespace Shiguang
             TextBlock emptyHint = Ui.Text("所选来源没有可用图片时，会自动使用内置画报。", 11, "#819884"); emptyHint.Margin = new Thickness(0, 18, 0, 0); sources.Children.Add(emptyHint);
 
             StackPanel about = SettingsCard("拾光画报 1.0", "把忙碌交给时间，把片刻留给风景。");
-            TextBlock shortcuts = Ui.Text("预览快捷键：← → 切换　空格 暂停 / 继续　F 收藏　Esc 退出", 12, "#ABBFA6"); shortcuts.Margin = new Thickness(0, 9, 0, 0); about.Children.Add(shortcuts);
+            TextBlock shortcuts = Ui.Text("预览快捷键：← → 切换　空格 暂停 / 继续　F 收藏；退出方式由上方设置决定。", 12, "#ABBFA6"); shortcuts.Margin = new Thickness(0, 9, 0, 0); about.Children.Add(shortcuts);
             TextBlock local = Ui.Text("设置和缓存保存在当前 Windows 用户目录。默认离线运行；启用每日壁纸后才连接必应。", 11, "#819884"); local.Margin = new Thickness(0, 13, 0, 0); about.Children.Add(local);
             Button openData = Ui.Button("打开数据文件夹 ↗", false); openData.HorizontalAlignment = HorizontalAlignment.Left; openData.Margin = new Thickness(0, 14, 0, 0);
             openData.Click += delegate { try { Native.Start(store.Root, ""); } catch (Exception ex) { store.Log(ex); Status("无法打开文件夹：" + ex.Message); } }; about.Children.Add(openData);

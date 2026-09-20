@@ -48,7 +48,12 @@ namespace Shiguang
             story.Children.Add(credit); story.Children.Add(title); story.Children.Add(quote); overlay.Children.Add(story);
             Controls = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 0), Visibility = interactive ? Visibility.Visible : Visibility.Collapsed };
             PreviousButton = ControlButton("‹", "上一张（←）"); PauseButton = ControlButton("Ⅱ", "暂停 / 继续（空格）"); NextButton = ControlButton("›", "下一张（→）"); FavoriteButton = ControlButton("♡", "收藏（F）"); CloseButton = ControlButton("退出  Esc", "退出预览"); CloseButton.Width = 98; CloseButton.FontSize = 12;
+            bool blankClickExit = settings.ExitMode == Settings.ExitWithBlankClick;
+            CloseButton.Visibility = blankClickExit ? Visibility.Collapsed : Visibility.Visible;
             Controls.Children.Add(PreviousButton); Controls.Children.Add(PauseButton); Controls.Children.Add(NextButton); Controls.Children.Add(FavoriteButton); Controls.Children.Add(CloseButton); overlay.Children.Add(Controls);
+            TextBlock exitHint = Label(blankClickExit ? "点击空白位置退出" : "按 Esc 退出", 11, "#C5D4C4");
+            exitHint.HorizontalAlignment = HorizontalAlignment.Left; exitHint.VerticalAlignment = VerticalAlignment.Bottom; exitHint.IsHitTestVisible = false;
+            overlay.Children.Add(exitHint);
             Viewbox content = new Viewbox { Stretch = Stretch.Uniform, Child = overlay };
             // A fixed logical canvas keeps text and controls proportional on all monitor sizes.
             overlay.Width = 1600; overlay.Height = 900; overlay.Margin = new Thickness(0);
@@ -88,6 +93,16 @@ namespace Shiguang
         public void SetProgress(double value) { progress.Width = Math.Max(0, ActualWidth * Math.Max(0, Math.Min(1, value))); }
         public void SetPaused(bool paused) { PauseButton.Content = paused ? "▷" : "Ⅱ"; }
         public void SetFavorite(bool favorite) { FavoriteButton.Content = favorite ? "♥" : "♡"; }
+        internal bool IsControlInteraction(DependencyObject source)
+        {
+            while (source != null)
+            {
+                if (source == Controls) return true;
+                FrameworkContentElement content = source as FrameworkContentElement;
+                source = content != null ? content.Parent : source is Visual ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+            }
+            return false;
+        }
         public static string LunarDate(DateTime day)
         {
             try
