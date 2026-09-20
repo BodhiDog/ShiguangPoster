@@ -2,6 +2,8 @@
 
 一个受早期 WPS 画报体验启发的 Windows 原生屏保：大幅风景、简洁时钟、轻柔轮播，以及自己的照片和收藏。
 
+**使用 GPT6-Astra 生成。**
+
 ## 新手安装
 
 适用于 **Windows 10 / 11**。如果提示缺少 .NET Framework，请先安装微软的 [.NET Framework 4.8 运行时（Runtime）](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)；已安装 4.8 或 4.8.1 可跳过。
