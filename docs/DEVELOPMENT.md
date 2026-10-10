@@ -26,7 +26,7 @@
 
 `build.ps1` 会默认编译后注册当前用户登录启动；`-NoLoginStartup` 可跳过该步骤。发布目录中的 `uninstall.cmd` 调用 `uninstall.ps1`，先停止本程序的进程、移除本程序拥有的登录启动和屏保注册，再删除 `%LOCALAPPDATA%\ShiguangPoster`。缺少屏保备份时会保留数据文件和现有屏保设置，避免误伤其他 Windows 设置。
 
-根目录的 `VERSION` 是发布版本的唯一来源。修改后双击 `package.cmd`，它调用 `package.ps1` 和 `build.ps1 -Package -NoLoginStartup`，同步程序集版本并在 `dist/` 中生成带版本号的 ZIP，不会更改当前电脑的登录启动项。
+根目录的 `VERSION` 是发布版本的唯一来源。修改后双击 `package.cmd`，它调用 `package.ps1` 和 `build.ps1 -Package -NoLoginStartup`，同步程序集版本并在 `dist/` 中生成带版本号的 ZIP。打包临时目录位于 `artifacts/package/`，成功后会清理；`dist/` 中所有非 ZIP 内容也会清理，因此只保留 ZIP 压缩包。打包不会更改当前电脑的登录启动项。
 
 ## 已执行的检查
 

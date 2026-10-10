@@ -1,4 +1,4 @@
-param([switch]$Verify, [switch]$Package, [switch]$NoLoginStartup, [string]$Version)
+param([switch]$Verify, [switch]$Package, [switch]$NoLoginStartup, [string]$Version, [string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $versionFile = Join-Path $projectRoot 'VERSION'
@@ -25,7 +25,7 @@ $compilerPath = Join-Path $frameworkRoot 'csc.exe'
 if (-not (Test-Path -LiteralPath $compilerPath)) {
     throw '.NET Framework 4.8 compiler was not found. No software has been installed.'
 }
-$outputRoot = Join-Path $projectRoot 'dist\ShiguangPoster'
+$outputRoot = if ([String]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $projectRoot 'dist\ShiguangPoster' } else { [IO.Path]::GetFullPath($OutputDirectory) }
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
 $references = @('System.dll','System.Core.dll','System.Xaml.dll','System.Web.Extensions.dll','System.Net.Http.dll','System.Drawing.dll','System.Windows.Forms.dll','WPF\WindowsBase.dll','WPF\PresentationCore.dll','WPF\PresentationFramework.dll')
 $compilerArgs = @('/nologo','/target:winexe','/platform:anycpu','/optimize+','/warn:4','/codepage:65001','/utf8output','/main:Shiguang.Program',('/out:' + (Join-Path $outputRoot 'ShiguangPoster.exe')),('/win32manifest:' + (Join-Path $projectRoot 'src\app.manifest')))
@@ -72,6 +72,8 @@ if ($Verify) {
 }
 Write-Output ('Built: ' + (Join-Path $outputRoot 'ShiguangPoster.exe'))
 if ($Package) {
+    $distRoot = Join-Path $projectRoot 'dist'
+    New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
     $archivePath = Join-Path $projectRoot ('dist\ShiguangPoster-' + $Version + '-win.zip')
     Compress-Archive -LiteralPath $outputRoot -DestinationPath $archivePath -CompressionLevel Optimal -Force
     Write-Output ('Packaged: ' + $archivePath)

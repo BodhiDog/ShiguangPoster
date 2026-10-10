@@ -136,7 +136,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Verify
 1. 打开根目录的 `VERSION`，将其中唯一的一行改为版本号，例如 `1.0.1`。
 2. 双击 `package.cmd`。
 
-脚本会同步更新程序版本，并生成 `dist\ShiguangPoster-1.0.1-win.zip`。它不会注册当前电脑的登录启动项。也可在 PowerShell 中运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\package.ps1`。
+脚本会同步更新程序版本，并生成 `dist\ShiguangPoster-1.0.1-win.zip`。打包用的临时文件会自动清理，`dist` 只保留 ZIP 压缩包；它不会注册当前电脑的登录启动项。也可在 PowerShell 中运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\package.ps1`。
 
 命令行示例：
 
