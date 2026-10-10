@@ -1,6 +1,22 @@
-param([switch]$Verify, [switch]$Package, [switch]$NoLoginStartup)
+param([switch]$Verify, [switch]$Package, [switch]$NoLoginStartup, [string]$Version)
 $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
+$versionFile = Join-Path $projectRoot 'VERSION'
+if ([String]::IsNullOrWhiteSpace($Version)) {
+    if (-not (Test-Path -LiteralPath $versionFile)) { throw 'VERSION was not found.' }
+    $Version = (Get-Content -LiteralPath $versionFile -Raw -Encoding UTF8).Trim()
+}
+if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'Version must use major.minor.patch or major.minor.patch.build.' }
+$assemblyVersion = if ($Version.Split('.').Count -eq 3) { $Version + '.0' } else { $Version }
+$programPath = Join-Path $projectRoot 'src\Program.cs'
+$programSource = [IO.File]::ReadAllText($programPath, [Text.Encoding]::UTF8)
+if ($programSource -notmatch '\[assembly: AssemblyVersion\("[^"]+"\)\]') { throw 'Assembly version attributes were not found.' }
+$versionedSource = $programSource -replace '(?m)(\[assembly: AssemblyVersion\(")[^"]+("\)\])', ('${1}' + $assemblyVersion + '${2}')
+$versionedSource = $versionedSource -replace '(?m)(\[assembly: AssemblyFileVersion\(")[^"]+("\)\])', ('${1}' + $assemblyVersion + '${2}')
+if ($versionedSource -ne $programSource) {
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    [IO.File]::WriteAllText($programPath, $versionedSource, $utf8)
+}
 $frameworkRoot = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 if (-not (Test-Path -LiteralPath (Join-Path $frameworkRoot 'csc.exe'))) {
     $frameworkRoot = Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319'
@@ -56,7 +72,7 @@ if ($Verify) {
 }
 Write-Output ('Built: ' + (Join-Path $outputRoot 'ShiguangPoster.exe'))
 if ($Package) {
-    $archivePath = Join-Path $projectRoot 'dist\ShiguangPoster-1.0.0-win.zip'
+    $archivePath = Join-Path $projectRoot ('dist\ShiguangPoster-' + $Version + '-win.zip')
     Compress-Archive -LiteralPath $outputRoot -DestinationPath $archivePath -CompressionLevel Optimal -Force
     Write-Output ('Packaged: ' + $archivePath)
 }

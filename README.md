@@ -10,7 +10,7 @@
 
 ### 方式一：从 GitHub 下载压缩包
 
-- **成品包**：如果仓库的 **Releases → Assets** 中提供了 `ShiguangPoster-*-win.zip`，下载后右键选择 **全部解压**，再双击解压目录里的 `ShiguangPoster.exe`。
+- **成品包**：仓库的 **Releases → Assets** 中提供了 `ShiguangPoster-*-win.zip`，下载后右键选择 **全部解压**，再双击解压目录里的 `ShiguangPoster.exe`。
 - **源码包**：通过 **Code → Download ZIP** 或 **Source code (zip)** 下载后，先全部解压，打开含有 `build.ps1` 的文件夹，在资源管理器地址栏输入 `powershell` 并回车，执行：
 
 ```powershell
@@ -24,7 +24,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 先安装 [Git for Windows](https://git-scm.com/install/windows)。在仓库页面点击 **Code → HTTPS** 复制地址，然后打开 PowerShell，将下面第一行的中文替换为该地址，依次执行：
 
 ```powershell
-git clone "这里替换为仓库的HTTPS地址" ShiguangPoster
+git clone https://github.com/BodhiDog/ShiguangPoster.git ShiguangPoster
 cd .\ShiguangPoster
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 .\dist\ShiguangPoster\ShiguangPoster.exe
@@ -131,7 +131,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Verify
 这里的 `ExecutionPolicy Bypass` 只作用于这一次构建进程，不会修改系统或用户的执行策略。脚本找不到编译器时会报错，不会自动下载或安装环境。
 构建成功后，脚本会注册当前用户的登录启动；若只想生成文件而不创建启动项，追加 `-NoLoginStartup`。
 
-增加 `-Package` 参数可同时生成 `dist/ShiguangPoster-1.0.0-win.zip` 便携包。
+## 更新版本并一键打包
+
+1. 打开根目录的 `VERSION`，将其中唯一的一行改为版本号，例如 `1.0.1`。
+2. 双击 `package.cmd`。
+
+脚本会同步更新程序版本，并生成 `dist\ShiguangPoster-1.0.1-win.zip`。它不会注册当前电脑的登录启动项。也可在 PowerShell 中运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\package.ps1`。
 
 命令行示例：
 
