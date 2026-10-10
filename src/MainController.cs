@@ -22,6 +22,7 @@ namespace Shiguang
         private readonly Settings settings;
         private readonly PhotoCatalog catalog;
         private readonly ScreensaverRegistration registration;
+        private readonly LoginStartupRegistration loginStartup;
         private readonly bool diagnostic;
         private readonly CancellationTokenSource lifetime = new CancellationTokenSource();
         private readonly DispatcherTimer clock;
@@ -32,7 +33,7 @@ namespace Shiguang
         private bool refreshing, closed;
         public MainController(AppStore appStore, Settings appSettings, List<Photo> initialPhotos, bool diagnostics)
         {
-            store = appStore; settings = appSettings; catalog = new PhotoCatalog(store); registration = new ScreensaverRegistration(store); diagnostic = diagnostics;
+            store = appStore; settings = appSettings; catalog = new PhotoCatalog(store); registration = new ScreensaverRegistration(store); loginStartup = new LoginStartupRegistration(store); diagnostic = diagnostics;
             photos = initialPhotos; hero = photos.First();
             Window = Ui.Resource<Window>("MainWindow.xaml"); Ui.Chrome(Window);
             B("CloseButton").Click += delegate { Window.Close(); };

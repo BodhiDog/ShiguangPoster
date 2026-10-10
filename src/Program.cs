@@ -25,6 +25,17 @@ namespace Shiguang
                 if (options.Mode == "preview" && (options.Parent == IntPtr.Zero || !Native.IsWindow(options.Parent))) return 0;
                 string root = options.DataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShiguangPoster");
                 store = new AppStore(root);
+                if (options.Mode == "enable-login-startup")
+                {
+                    new LoginStartupRegistration(store).Enable();
+                    return 0;
+                }
+                if (options.Mode == "disable-login-startup") return new LoginStartupRegistration(store).Disable() ? 0 : 2;
+                if (options.Mode == "uninstall")
+                {
+                    new LoginStartupRegistration(store).Disable();
+                    return new ScreensaverRegistration(store).Disable() ? 0 : 2;
+                }
                 Application app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
                 app.Resources.MergedDictionaries.Add(Ui.Resource<ResourceDictionary>("Theme.xaml"));
                 AppStore log = store;

@@ -1,4 +1,4 @@
-param([switch]$Verify, [switch]$Package)
+param([switch]$Verify, [switch]$Package, [switch]$NoLoginStartup)
 $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $frameworkRoot = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
@@ -27,6 +27,9 @@ Copy-Item -LiteralPath (Join-Path $outputRoot 'ShiguangPoster.exe') -Destination
 foreach ($name in @('ShiguangPoster.exe.config','ShiguangPoster.scr.config')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'src\App.config') -Destination (Join-Path $outputRoot $name)
 }
+foreach ($name in @('uninstall.ps1','uninstall.cmd')) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot $name) -Destination (Join-Path $outputRoot $name)
+}
 if (Test-Path -LiteralPath (Join-Path $projectRoot 'README.md')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination (Join-Path $outputRoot 'README.md')
 }
@@ -38,10 +41,15 @@ if (Test-Path -LiteralPath $docsPath) {
         Copy-Item -LiteralPath $docFile.FullName -Destination (Join-Path $outputDocs $docFile.Name)
     }
 }
+$appPath = Join-Path $outputRoot 'ShiguangPoster.exe'
+if (-not $NoLoginStartup) {
+    $startupProcess = Start-Process -FilePath $appPath -ArgumentList '--enable-login-startup' -Wait -PassThru
+    if ($startupProcess.ExitCode -ne 0) { throw 'Could not register login startup.' }
+    Write-Output 'Registered: current-user login startup'
+}
 if ($Verify) {
     $verifyRoot = Join-Path $projectRoot 'artifacts\verification'
     New-Item -ItemType Directory -Force -Path $verifyRoot | Out-Null
-    $appPath = Join-Path $outputRoot 'ShiguangPoster.exe'
     & $appPath --verify --data-dir $verifyRoot --output-dir $verifyRoot | Out-Null
     if ($LASTEXITCODE -ne 0) { throw ('Verification failed. See ' + $verifyRoot) }
     Get-Content -LiteralPath (Join-Path $verifyRoot 'verification.txt') -Encoding UTF8

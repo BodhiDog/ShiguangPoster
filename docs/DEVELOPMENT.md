@@ -11,7 +11,7 @@
 | `MainController.cs`、`SettingsPage.cs` | 画廊、收藏、本地目录和设置交互 |
 | `Photos.cs` | 图片目录、必应缓存、受限图片解码、EXIF 方向 |
 | `PosterView.cs`、`Saver.cs` | 全屏视图、轮播、输入退出、多屏和系统缩略预览 |
-| `Native.cs` | Windows 屏保注册、设置备份与恢复 |
+| `Native.cs` | Windows 屏保与登录启动注册、设置备份和安全恢复 |
 | `Verification.cs` | 离屏验证与可选原生窗口测试 |
 
 主界面异步读取本地目录和缩略图。轮播在后台解码下一张图片，将冻结的位图共享给所有显示器，使用 WPF 不透明度动画过渡。位图解码不放大小图，长边限制为 3840 像素，缓存按解码像素总量和条目数限制。网络请求设有超时、下载大小上限、HTTPS 和缓存路径校验。
@@ -22,7 +22,9 @@
 
 多显示器以屏幕像素边界放置原生窗口；修改显示器配置会关闭当前屏保。`/p` 使用子级 `HwndSource`，跟随父窗口大小，不创建全屏窗口。
 
-“启用系统屏保”只写当前用户注册表和用户数据目录，不复制文件到 Windows/System32。先备份原有配置，再更新 `SCRNSAVE.EXE`，通过 `SystemParametersInfoW` 更新等待时间与启用状态。恢复登录要求保持由 Windows 管理。
+“启用系统屏保”只写当前用户注册表和用户数据目录，不复制文件到 Windows/System32。先备份原有配置，再更新 `SCRNSAVE.EXE`，通过 `SystemParametersInfoW` 更新等待时间与启用状态。恢复时仅还原仍保持为本程序所写入值的开关和等待时间，避免覆盖用户后续在 Windows 中的调整。登录启动使用当前用户的 `Run` 项，并且只有值仍精确指向本程序稳定副本时才会删除。
+
+`build.ps1` 会默认编译后注册当前用户登录启动；`-NoLoginStartup` 可跳过该步骤。发布目录中的 `uninstall.cmd` 调用 `uninstall.ps1`，先停止本程序的进程、移除本程序拥有的登录启动和屏保注册，再删除 `%LOCALAPPDATA%\ShiguangPoster`。缺少屏保备份时会保留数据文件和现有屏保设置，避免误伤其他 Windows 设置。
 
 ## 已执行的检查
 

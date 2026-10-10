@@ -31,6 +31,33 @@ namespace Shiguang
             RoutedEventHandler handler = delegate { changed(toggle.IsChecked == true); Save(); };
             toggle.Checked += handler; toggle.Unchecked += handler; return toggle;
         }
+        private CheckBox LoginStartupSwitch()
+        {
+            CheckBox toggle = new CheckBox { IsChecked = loginStartup.IsEnabled() };
+            toggle.SetResourceReference(FrameworkElement.StyleProperty, "Switch");
+            bool reverting = false;
+            RoutedEventHandler handler = delegate
+            {
+                if (reverting) return;
+                try
+                {
+                    if (toggle.IsChecked == true) loginStartup.Enable();
+                    else if (!loginStartup.Disable()) throw new InvalidOperationException("已保留同名但不属于拾光画报的启动项。");
+                    Status(toggle.IsChecked == true ? "已设置为登录 Windows 后自动打开" : "已关闭登录后自动打开");
+                }
+                catch (Exception ex)
+                {
+                    store.Log(ex);
+                    reverting = true;
+                    toggle.IsChecked = loginStartup.IsEnabled();
+                    reverting = false;
+                    Status("无法更新登录启动设置：" + ex.Message);
+                }
+            };
+            toggle.Checked += handler;
+            toggle.Unchecked += handler;
+            return toggle;
+        }
         private ComboBox Choice(string[] labels, int selected, Action<int> changed)
         {
             ComboBox choice = new ComboBox();
@@ -43,6 +70,7 @@ namespace Shiguang
             Ui.Find<StackPanel>(Window, "SettingsPage").Children.Clear();
             StackPanel system = SettingsCard("让风景，在你离开时出现", "启用后由 Windows 在空闲时启动，无需让主窗口一直开着。");
             TextBlock state = Ui.Text(registration.IsEnabled() ? "●  已启用拾光屏保" : "○  拾光屏保尚未启用", 12, "#B8D7B4"); state.Margin = new Thickness(0, 9, 0, 0); system.Children.Add(state);
+            SettingRow(system, "登录 Windows 时打开拾光画报", "登录当前账户后自动打开主窗口，无需管理员权限。", LoginStartupSwitch());
             int currentTimeout = registration.TimeoutMinutes();
             int[] waits = new[] { 1, 3, 5, 10, 15, 30, 60, currentTimeout }.Distinct().OrderBy(v => v).ToArray();
             ComboBox idleChoice = new ComboBox(); foreach (int wait in waits) idleChoice.Items.Add(wait + " 分钟"); idleChoice.SelectedIndex = Array.IndexOf(waits, currentTimeout);
@@ -51,12 +79,20 @@ namespace Shiguang
             Button enable = Ui.Button(registration.IsEnabled() ? "更新系统屏保" : "启用系统屏保", true);
             enable.Click += delegate
             {
-                try { if (!Save()) return; registration.Enable(waits[idleChoice.SelectedIndex]); BuildSettings(); Status("已启用 · 空闲 " + waits[idleChoice.SelectedIndex] + " 分钟后自动播放"); }
+                try
+                {
+                    if (!Save()) return;
+                    registration.Enable(waits[idleChoice.SelectedIndex]);
+                    try { loginStartup.Enable(); }
+                    catch (Exception startupException) { store.Log(startupException); BuildSettings(); Status("屏保已启用，但无法设置登录启动：" + startupException.Message); return; }
+                    BuildSettings();
+                    Status("已启用 · 空闲 " + waits[idleChoice.SelectedIndex] + " 分钟后自动播放，并会在登录后打开拾光画报");
+                }
                 catch (Exception ex) { store.Log(ex); Status("无法启用系统屏保：" + ex.Message); }
             };
             systemActions.Children.Add(enable);
             Button disable = Ui.Button("停用拾光屏保", false); disable.Margin = new Thickness(10, 0, 0, 0); disable.IsEnabled = registration.IsInstalled();
-            disable.Click += delegate { try { registration.Disable(); BuildSettings(); Status("已停用拾光屏保，并恢复此前的屏保设置"); } catch (Exception ex) { store.Log(ex); Status("无法停用屏保：" + ex.Message); } }; systemActions.Children.Add(disable);
+            disable.Click += delegate { try { bool restored = registration.Disable(); BuildSettings(); Status(restored ? "已停用拾光屏保，并恢复此前的屏保设置" : "未停用屏保：找不到可安全恢复的设置备份"); } catch (Exception ex) { store.Log(ex); Status("无法停用屏保：" + ex.Message); } }; systemActions.Children.Add(disable);
             Button panel = Ui.Button("Windows 屏保设置 ↗", false); panel.SetResourceReference(FrameworkElement.StyleProperty, "GhostButton"); panel.Margin = new Thickness(7, 0, 0, 0);
             panel.Click += delegate { try { registration.OpenControlPanel(); } catch (Exception ex) { store.Log(ex); Status("无法打开 Windows 设置：" + ex.Message); } }; systemActions.Children.Add(panel);
             system.Children.Add(systemActions);

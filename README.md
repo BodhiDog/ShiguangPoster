@@ -32,6 +32,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 **启用自动屏保**：打开软件后，进入 **屏保设置**，选择空闲时间，点击 **启用系统屏保**。默认按 **Esc** 退出，也可在设置中改为点击空白位置退出。
 
+**登录自动启动与卸载**：直接运行 `build.ps1` 会为当前 Windows 用户设置“登录后打开拾光画报”；下次登录或重启后生效。发布包用户可在 **屏保设置** 打开同名开关。要卸载时，双击发布目录中的 `uninstall.cmd`；它只移除拾光画报的登录启动项、屏保注册和本地数据，不会删除原始照片或改动后来在 Windows 中修改的屏保选项。
+
 ## 项目预览
 
 可运行版本：`dist/ShiguangPoster/ShiguangPoster.exe`。使用 .NET Framework 4.8 编译，**未安装任何运行环境或第三方依赖**。
@@ -46,6 +48,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 4. 需要播放自己的照片时，进入 **我的相册 → 添加照片文件夹**。
 
 启用后可以关闭主窗口，Windows 仍会在空闲时启动屏保。启用操作将屏保文件复制到当前用户的数据目录，移动或删除下载的便携目录不会使已启用的屏保失效。
+`build.ps1` 默认也会将主程序复制到该目录，并登记当前用户登录启动；这是“登录后启动”，不会在 Windows 登录界面之前运行。组织策略或 Windows 的启动应用管理仍可禁用启动项。
 
 首次打开不会自动启用系统屏保。停用时点击 **停用拾光屏保**，程序会恢复启用前保存的屏保路径、启用状态和等待时间。如果你随后已经在 Windows 中改用了其他屏保，停用拾光不会覆盖那个选择。
 
@@ -95,6 +98,8 @@ ShiguangPoster/
   ShiguangPoster.exe.config
   ShiguangPoster.scr
   ShiguangPoster.scr.config
+  uninstall.cmd
+  uninstall.ps1
   README.md
   docs/
 ```
@@ -107,7 +112,7 @@ ShiguangPoster/
 | --- | --- |
 | `settings.json` | 屏保偏好、本地相册路径、收藏列表 |
 | `cache/`、`bing.json` | 必应图片及来源缓存 |
-| `bin/ShiguangPoster.scr` | 点击启用后保存的系统屏保副本 |
+| `bin/ShiguangPoster.exe`、`bin/ShiguangPoster.scr` | 登录启动和系统屏保使用的稳定副本 |
 | `previous-screensaver.json` | 启用前的 Windows 屏保设置备份 |
 | `app.log` | 启动、读取或网络错误日志 |
 
@@ -124,6 +129,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Verify
 ```
 
 这里的 `ExecutionPolicy Bypass` 只作用于这一次构建进程，不会修改系统或用户的执行策略。脚本找不到编译器时会报错，不会自动下载或安装环境。
+构建成功后，脚本会注册当前用户的登录启动；若只想生成文件而不创建启动项，追加 `-NoLoginStartup`。
 
 增加 `-Package` 参数可同时生成 `dist/ShiguangPoster-1.0.0-win.zip` 便携包。
 
