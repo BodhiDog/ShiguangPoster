@@ -23,7 +23,7 @@ namespace Shiguang
             {
                 LaunchOptions options = LaunchOptions.Parse(args);
                 if (options.Mode == "preview" && (options.Parent == IntPtr.Zero || !Native.IsWindow(options.Parent))) return 0;
-                string root = options.DataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShiguangPoster");
+                string root = options.DataDirectory ?? Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "data");
                 store = new AppStore(root);
                 if (options.Mode == "enable-login-startup")
                 {

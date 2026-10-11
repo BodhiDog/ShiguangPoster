@@ -43,7 +43,7 @@ namespace Shiguang
                 Check("atomic replacement updates existing settings", testStore.LoadSettings().IntervalSeconds == 45);
                 File.WriteAllText(testStore.FilePath("settings.json"), "{\"Version\":1,\"IntervalSeconds\":120,\"ExitOnMouseMove\":true}");
                 Settings legacy = testStore.LoadSettings();
-                Check("legacy mouse-move settings migrate without losing preferences", legacy.ExitMode == Settings.ExitWithEscape && legacy.Version == 2 && legacy.IntervalSeconds == 120);
+                Check("legacy mouse-move settings migrate without losing preferences", legacy.ExitMode == Settings.ExitWithEscape && legacy.Version == 3 && legacy.IntervalSeconds == 120 && legacy.OnlineCacheDays == 30);
                 File.WriteAllText(testStore.FilePath("settings.json"), "{broken");
                 Check("corrupt settings fall back without crashing", testStore.LoadSettings().IntervalSeconds == 45 && testStore.Warning != null);
                 Check("corrupt settings are backed up", Directory.GetFiles(testStore.Root, "settings.invalid-*.json").Length > 0);

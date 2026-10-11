@@ -124,7 +124,10 @@ namespace Shiguang
             SettingRow(sources, "拾光原创画报", "内置三张 AI 生成风景，随时离线欣赏。", Switch(settings.IncludeBuiltIn, v => settings.IncludeBuiltIn = v));
             SettingRow(sources, "我的本地相册", "在“我的相册”中添加照片文件夹。", Switch(settings.IncludeLocal, v => settings.IncludeLocal = v));
             SettingRow(sources, "读取相册子文件夹", "单次最多读取 1500 张照片。", Switch(settings.IncludeSubfolders, async v => { settings.IncludeSubfolders = v; await ReloadLibrary(); }));
-            SettingRow(sources, "必应每日壁纸", "联网下载最近八天的图片，最多保留三十张缓存。", Switch(settings.OnlineEnabled, async v => { settings.OnlineEnabled = v; await ReloadLibrary(); if (v) await RefreshOnline(); }));
+            SettingRow(sources, "必应每日壁纸", "联网下载最近八天的图片。", Switch(settings.OnlineEnabled, async v => { settings.OnlineEnabled = v; await ReloadLibrary(); if (v) await RefreshOnline(); }));
+            int[] cachePeriods = new[] { 0, 7, 30, 90, 180, 365 };
+            string[] cacheLabels = new[] { "不自动删除", "1 周", "1 个月", "3 个月", "6 个月", "1 年" };
+            SettingRow(sources, "每日壁纸缓存保留", "到期后自动删除缓存图片；选择不自动删除会一直保留。", Choice(cacheLabels, Array.IndexOf(cachePeriods, settings.OnlineCacheDays), i => { settings.OnlineCacheDays = cachePeriods[i]; new PhotoCatalog(store).PruneOnlineCache(settings); }));
             SettingRow(sources, "仅播放我的收藏", "收藏为空或不可用时，使用内置画报。", Switch(settings.FavoritesOnly, v => settings.FavoritesOnly = v));
             TextBlock emptyHint = Ui.Text("所选来源没有可用图片时，会自动使用内置画报。", 11, "#819884"); emptyHint.Margin = new Thickness(0, 18, 0, 0); sources.Children.Add(emptyHint);
 
