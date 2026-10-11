@@ -43,8 +43,12 @@ Copy-Item -LiteralPath (Join-Path $outputRoot 'ShiguangPoster.exe') -Destination
 foreach ($name in @('ShiguangPoster.exe.config','ShiguangPoster.scr.config')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'src\App.config') -Destination (Join-Path $outputRoot $name)
 }
-foreach ($name in @('uninstall.ps1','uninstall.cmd')) {
+foreach ($name in @('build.ps1','package.ps1','package.cmd','uninstall.ps1','uninstall.cmd','VERSION')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $name) -Destination (Join-Path $outputRoot $name)
+}
+foreach ($directory in @('src','assets')) {
+    $sourceDirectory = Join-Path $projectRoot $directory
+    if (Test-Path -LiteralPath $sourceDirectory) { Copy-Item -LiteralPath $sourceDirectory -Destination (Join-Path $outputRoot $directory) -Recurse -Force }
 }
 if (Test-Path -LiteralPath (Join-Path $projectRoot 'README.md')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination (Join-Path $outputRoot 'README.md')

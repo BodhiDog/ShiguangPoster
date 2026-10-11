@@ -31,6 +31,7 @@ namespace Shiguang
         }
         public List<Photo> Load(Settings settings)
         {
+            PruneOnlineCache(settings);
             List<Photo> photos = BuiltIn();
             if (settings.OnlineEnabled) photos.AddRange(ReadOnlineCache());
             HashSet<string> found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -91,6 +92,29 @@ namespace Shiguang
             if (String.IsNullOrEmpty(path)) return false;
             string cache = System.IO.Path.GetFullPath(store.FilePath("cache")) + System.IO.Path.DirectorySeparatorChar;
             try { return System.IO.Path.GetFullPath(path).StartsWith(cache, StringComparison.OrdinalIgnoreCase); } catch { return false; }
+        }
+        public void PruneOnlineCache(Settings settings)
+        {
+            if (settings.OnlineCacheDays <= 0) return;
+            try
+            {
+                string cacheDirectory = store.FilePath("cache");
+                if (!Directory.Exists(cacheDirectory)) return;
+                DateTime cutoff = DateTime.UtcNow.AddDays(-settings.OnlineCacheDays);
+                foreach (string file in Directory.GetFiles(cacheDirectory, "*.jpg"))
+                {
+                    if (IsCachePath(file) && File.GetLastWriteTimeUtc(file) < cutoff)
+                    {
+                        try { File.Delete(file); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                    }
+                }
+                string manifest = store.FilePath("bing.json");
+                if (!File.Exists(manifest)) return;
+                List<Photo> remaining = (Json.Read<List<Photo>>(manifest) ?? new List<Photo>())
+                    .Where(p => p != null && p.Source == "online" && IsCachePath(p.Path) && File.Exists(p.Path)).ToList();
+                Json.Write(manifest, remaining);
+            }
+            catch (Exception ex) { store.Log(ex); }
         }
         public async Task<int> RefreshOnline(CancellationToken cancellationToken)
         {
@@ -156,12 +180,9 @@ namespace Shiguang
                     catch (Exception ex) { store.Log(ex); }
                 }
                 if (downloaded.Count == 0) throw new IOException("暂时无法获取必应图片。");
-                List<Photo> merged = downloaded.Concat(cached).GroupBy(p => p.Id).Select(g => g.First()).OrderByDescending(p => p.Date).Take(30).ToList();
+                List<Photo> merged = downloaded.Concat(cached).GroupBy(p => p.Id).Select(g => g.First()).OrderByDescending(p => p.Date).ToList();
                 Json.Write(store.FilePath("bing.json"), merged);
-                // Only prune files created by this cache, after publishing the valid manifest.
-                HashSet<string> retained = new HashSet<string>(merged.Select(p => p.Path), StringComparer.OrdinalIgnoreCase);
-                foreach (string stale in Directory.GetFiles(cacheDirectory, "*.jpg"))
-                    if (IsCachePath(stale) && !retained.Contains(stale)) { try { File.Delete(stale); } catch (IOException) { } }
+                PruneOnlineCache(settings);
                 return downloaded.Count;
             }
         }

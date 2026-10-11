@@ -44,7 +44,7 @@ namespace Shiguang
         private readonly AppStore store;
 
         public LoginStartupRegistration(AppStore appStore) { store = appStore; }
-        public string InstalledPath { get { return store.FilePath("bin\\ShiguangPoster.exe"); } }
+        public string InstalledPath { get { return Path.ChangeExtension(Assembly.GetExecutingAssembly().Location, ".exe"); } }
         private string CommandLine { get { return "\"" + InstalledPath + "\""; } }
 
         public bool IsEnabled()
@@ -59,14 +59,7 @@ namespace Shiguang
         public void Enable()
         {
             if (CommandLine.Length > 260) throw new InvalidOperationException("The Windows startup command is too long.");
-            Directory.CreateDirectory(Path.GetDirectoryName(InstalledPath));
-            string source = Assembly.GetExecutingAssembly().Location;
-            if (!String.Equals(source, InstalledPath, StringComparison.OrdinalIgnoreCase))
-            {
-                File.Copy(source, InstalledPath, true);
-                string sourceConfig = source + ".config";
-                if (File.Exists(sourceConfig)) File.Copy(sourceConfig, InstalledPath + ".config", true);
-            }
+            if (!File.Exists(InstalledPath)) throw new FileNotFoundException("ShiguangPoster.exe was not found.", InstalledPath);
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKey)) key.SetValue(ValueName, CommandLine, RegistryValueKind.String);
         }
 
@@ -91,7 +84,14 @@ namespace Shiguang
         private readonly AppStore store;
         private const string DesktopKey = @"Control Panel\Desktop";
         public ScreensaverRegistration(AppStore appStore) { store = appStore; }
-        public string InstalledPath { get { return store.FilePath("bin\\ShiguangPoster.scr"); } }
+        public string InstalledPath
+        {
+            get
+            {
+                string source = Assembly.GetExecutingAssembly().Location;
+                return String.Equals(Path.GetExtension(source), ".scr", StringComparison.OrdinalIgnoreCase) ? source : Path.ChangeExtension(source, ".scr");
+            }
+        }
         public bool IsInstalled()
         {
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(DesktopKey))
@@ -141,13 +141,7 @@ namespace Shiguang
             bool wasInstalled = IsInstalled();
             RegistrySnapshot restorePoint = wasInstalled ? ReadSnapshot() : before;
             if (!wasInstalled) Json.Write(store.FilePath("previous-screensaver.json"), restorePoint);
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(InstalledPath));
-            string source = Assembly.GetExecutingAssembly().Location;
-            if (!String.Equals(source, InstalledPath, StringComparison.OrdinalIgnoreCase))
-            {
-                File.Copy(source, InstalledPath, true);
-                if (File.Exists(source + ".config")) File.Copy(source + ".config", InstalledPath + ".config", true);
-            }
+            if (!File.Exists(InstalledPath)) throw new FileNotFoundException("ShiguangPoster.scr was not found.", InstalledPath);
             try
             {
                 using (RegistryKey key = Registry.CurrentUser.CreateSubKey(DesktopKey)) key.SetValue("SCRNSAVE.EXE", InstalledPath, RegistryValueKind.String);

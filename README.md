@@ -47,7 +47,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 3. 需要自动屏保时，进入 **屏保设置**，选择空闲分钟数，点击 **启用系统屏保**。
 4. 需要播放自己的照片时，进入 **我的相册 → 添加照片文件夹**。
 
-启用后可以关闭主窗口，Windows 仍会在空闲时启动屏保。启用操作会把屏保文件复制到当前用户数据目录，移动或删除下载的便携目录不会使已启用的屏保失效；`build.ps1` 默认也会复制主程序到该目录并登记当前用户登录启动（不会在 Windows 登录界面之前运行，组织策略或启动应用管理仍可禁用启动项）。
+启用后可以关闭主窗口，Windows 仍会在空闲时启动屏保。屏保和登录启动直接使用安装目录中的程序文件，因此启用后请不要移动或删除这个目录；`build.ps1` 默认会登记当前用户登录启动（不会在 Windows 登录界面之前运行，组织策略或启动应用管理仍可禁用启动项）。
 
 首次打开不会自动启用系统屏保；停用时点击 **停用拾光屏保**，程序会恢复启用前保存的屏保路径、启用状态和等待时间，但不会覆盖你后来在 Windows 中改用的其他屏保。已启用旧版系统屏保时，请在 **屏保设置** 中点击一次 **更新系统屏保** 同步已安装副本。恢复时是否显示登录屏幕由 Windows 屏保设置管理，软件内提供对应入口。
 
@@ -60,7 +60,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 - **退出方式**：在 **屏保设置 → 播放的节奏 → 退出屏保方式** 中选择 **按退出键（Esc）退出** 或 **鼠标点击屏保空白位置退出**；设置自动保存，对下一次全屏预览和自动屏保生效，旧配置默认 Esc 模式。
 - **时钟日期**：12/24 小时制、公历、星期、农历、左下或居中布局、心情短句开关。
 - **多显示器**：全部屏幕同步显示同一张画报，也可只显示主屏；显示器配置变化时退出屏保。
-- **每日壁纸**：默认关闭；打开后从必应下载最近八天的图片，缓存最多三十张，打开主程序或运行系统屏保时检查当日更新，断网时继续使用已有图片。
+- **每日壁纸**：默认关闭；打开后从必应下载最近八天的图片，缓存可选择 1 周、1/3/6 个月、1 年自动删除或不自动删除，打开主程序或运行系统屏保时检查当日更新，断网时继续使用已有图片。
 - **Windows 原生屏保**：随包提供 `.scr`，支持 `/s` 运行、`/c` 设置、`/p HWND` 系统缩略预览。
 - **本地保存**：设置自动保存；损坏设置备份后回退，无法读取的图片会跳过。
 
@@ -81,9 +81,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 ## 文件与数据
 
-便携包包含 `ShiguangPoster.exe`、`ShiguangPoster.exe.config`、`ShiguangPoster.scr`、`ShiguangPoster.scr.config`、`uninstall.cmd`、`uninstall.ps1`、`README.md` 和 `docs/`；三张风景图和界面资源均嵌入程序，不需要额外复制图片目录。
+便携包包含可执行程序、`build.ps1`、`package.ps1`、`package.cmd`、卸载脚本、`VERSION`、`src/`、`assets/`、`README.md` 和 `docs/`；三张风景图和界面资源均嵌入程序，不需要额外复制图片目录。
 
-用户数据默认位于 `%LOCALAPPDATA%\ShiguangPoster`：`settings.json` 保存屏保偏好、本地相册路径和收藏列表；`cache/`、`bing.json` 缓存必应图片及来源；`bin/` 存放登录启动和系统屏保使用的稳定副本；`previous-screensaver.json` 备份启用前的屏保设置；`app.log` 记录启动、读取或网络错误。
+用户数据默认位于软件安装目录的 `data/`（首次运行后创建）：`settings.json` 保存屏保偏好、本地相册路径、收藏列表和缓存保留期限；`cache/`、`bing.json` 缓存必应图片及来源；`previous-screensaver.json` 备份启用前的屏保设置；`app.log` 记录启动、读取或网络错误。
 
 本地照片只在本机读取。默认不联网，只有开启每日壁纸后才连接必应。运行不需要管理员权限；电脑上的组织策略可能限制 Windows 屏保设置。
 
@@ -102,7 +102,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Verify
 1. 打开根目录的 `VERSION`，将其唯一一行改为版本号，例如 `1.0.1`。
 2. 双击 `package.cmd`。
 
-脚本会同步更新程序版本并生成 `dist\ShiguangPoster-1.0.1-win.zip`，临时文件自动清理，`dist` 只保留 ZIP 压缩包，且不会注册当前电脑的登录启动项。也可在 PowerShell 中运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\package.ps1`。
+脚本会同步更新程序版本并生成 `dist\ShiguangPoster-1.0.1-win.zip`。压缩包包含构建、打包和卸载脚本，以及 `src/`、`assets/`；临时文件自动清理，`dist` 只保留 ZIP 压缩包，且不会注册当前电脑的登录启动项。也可在 PowerShell 中运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\package.ps1`。
 
 命令行示例：
 

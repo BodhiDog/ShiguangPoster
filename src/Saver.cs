@@ -110,17 +110,42 @@ namespace Shiguang
                     view.CloseButton.Click += delegate { Stop(); };
                     windows.Add(window);
                 }
+                ShowInitial();
                 if (owner != null) owner.Hide();
                 foreach (Window window in windows) window.Show();
                 if (windows.Count > 0) { windows[0].Activate(); windows[0].Focus(); }
                 SystemEvents.DisplaySettingsChanged += DisplaysChanged;
                 elapsed.Start(); timer.Start();
-                ShowInitial();
                 if (!interactive && settings.OnlineEnabled) RefreshDaily();
             }
             catch (Exception ex) { store.Log(ex); Stop(); if (interactive) MessageBox.Show("无法开始预览：" + ex.Message, "拾光画报"); }
         }
-        private async void ShowInitial() { await Change(0, true); }
+        private void ShowInitial()
+        {
+            Photo photo = deck.Current;
+            BitmapSource image = null;
+            int attempts = Math.Min(deck.Count, 30);
+            for (int i = 0; i < attempts; i++)
+            {
+                photo = deck.Current;
+                image = ImageLoader.Load(photo, 2560);
+                if (image != null) break;
+                deck.Move(1);
+            }
+            if (image == null)
+            {
+                deck = new SlideDeck(PhotoCatalog.BuiltIn(), settings.Shuffle, null, null);
+                photo = deck.Current;
+                image = ImageLoader.Load(photo, 2560);
+            }
+            displayedPhoto = photo;
+            foreach (PosterView view in views)
+            {
+                view.Display(photo, image, deck.Index, deck.Count, false);
+                view.SetFavorite(settings.Favorites.Contains(photo.Id, StringComparer.OrdinalIgnoreCase));
+            }
+            slideElapsed = 0;
+        }
         private async void RefreshDaily()
         {
             try

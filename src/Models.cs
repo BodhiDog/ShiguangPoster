@@ -23,6 +23,7 @@ namespace Shiguang
         public string ExitMode { get; set; }
         public bool AllMonitors { get; set; }
         public bool OnlineEnabled { get; set; }
+        public int OnlineCacheDays { get; set; }
         public bool IncludeBuiltIn { get; set; }
         public bool IncludeLocal { get; set; }
         public bool FavoritesOnly { get; set; }
@@ -33,7 +34,7 @@ namespace Shiguang
         public List<string> Favorites { get; set; }
         public Settings()
         {
-            Version = 2; IntervalSeconds = 45; Brightness = 90;
+            Version = 3; IntervalSeconds = 45; Brightness = 90; OnlineCacheDays = 30;
             ShowClock = ShowDate = ShowQuote = Fade = AllMonitors = true;
             ExitMode = ExitWithEscape;
             IncludeBuiltIn = IncludeLocal = IncludeSubfolders = true;
@@ -42,10 +43,12 @@ namespace Shiguang
         }
         public void Normalize()
         {
-            Version = 2;
+            if (Version < 3) OnlineCacheDays = 30;
+            Version = 3;
             if (ExitMode != ExitWithBlankClick) ExitMode = ExitWithEscape;
             IntervalSeconds = Math.Max(10, Math.Min(3600, IntervalSeconds));
             Brightness = Math.Max(30, Math.Min(100, Brightness));
+            if (OnlineCacheDays != 0 && OnlineCacheDays != 7 && OnlineCacheDays != 30 && OnlineCacheDays != 90 && OnlineCacheDays != 180 && OnlineCacheDays != 365) OnlineCacheDays = 30;
             if (ClockPosition != "center") ClockPosition = "left";
             LocalFolders = (LocalFolders ?? new List<string>()).Where(p => !String.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).Take(50).ToList();
             Favorites = (Favorites ?? new List<string>()).Where(p => !String.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).Take(10000).ToList();
