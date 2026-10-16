@@ -32,7 +32,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 **启用自动屏保**：打开软件，进入 **屏保设置**，选择空闲时间，点击 **启用系统屏保**。默认按 **Esc** 退出，也可改为点击空白位置退出。
 
-**登录自动启动与卸载**：`build.ps1` 会为当前 Windows 用户设置“登录后打开拾光画报”，下次登录或重启生效；发布包用户可在 **屏保设置** 打开同名开关。卸载时双击发布目录中的 `uninstall.cmd`，它只移除登录启动项、屏保注册和本地数据，不会删除原始照片，也不会改动你后来在 Windows 中修改的屏保选项。
+**登录后台运行与卸载**：`build.ps1` 会为当前 Windows 用户设置“登录后在后台运行拾光画报”，下次登录或重启生效，且不会显示主窗口；发布包用户可在 **屏保设置** 打开同名开关。卸载时双击发布目录中的 `uninstall.cmd`，它只移除登录启动项、屏保注册和本地数据，不会删除原始照片，也不会改动你后来在 Windows 中修改的屏保选项。
 
 ## 项目预览
 
@@ -95,7 +95,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Verify
 ```
 
-`ExecutionPolicy Bypass` 只作用于这一次构建进程，不会修改系统或用户的执行策略；脚本找不到编译器时会报错，不会自动下载或安装环境。构建成功后会注册当前用户的登录启动，若只生成文件而不创建启动项，追加 `-NoLoginStartup`。
+`ExecutionPolicy Bypass` 只作用于这一次构建进程，不会修改系统或用户的执行策略；脚本找不到编译器时会报错，不会自动下载或安装环境。构建成功后会注册当前用户的登录后台启动，登录后不会显示主窗口；若只生成文件而不创建启动项，追加 `-NoLoginStartup`。
 
 ## 更新版本并一键打包
 

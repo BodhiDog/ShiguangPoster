@@ -15,6 +15,8 @@ namespace Shiguang
 {
     public static class Program
     {
+        private static int backgroundRefreshPending;
+
         [STAThread]
         public static int Main(string[] args)
         {
@@ -50,6 +52,7 @@ namespace Shiguang
                 if (options.Mode == "online-check") return Verification.CheckOnline(store);
                 Settings settings = store.LoadSettings();
                 if (options.Mode == "smoke") return Verification.Smoke(app, store, settings, options.OutputDirectory ?? root);
+                if (options.Mode == "background") return RunInBackground(app, store);
                 if (options.Mode == "preview")
                 {
                     using (NativePreview preview = new NativePreview(options.Parent, settings, PhotoCatalog.Playlist(new PhotoCatalog(store).Load(settings), settings))) return app.Run();
@@ -81,6 +84,38 @@ namespace Shiguang
                 if (!quiet) MessageBox.Show("拾光画报未能启动：" + ex.Message + "\n\n详情记录在本地 app.log 中。", "拾光画报", MessageBoxButton.OK, MessageBoxImage.Information);
                 return 1;
             }
+        }
+
+        private static int RunInBackground(Application app, AppStore store)
+        {
+            bool created;
+            using (Mutex mutex = new Mutex(true, "Local\\ShiguangPoster.Background", out created))
+            {
+                if (!created) return 0;
+                System.Windows.Threading.DispatcherTimer timer = new System.Windows.Threading.DispatcherTimer();
+                timer.Interval = TimeSpan.FromHours(6);
+                timer.Tick += delegate { RefreshDailyInBackground(store); };
+                timer.Start();
+                RefreshDailyInBackground(store);
+                try { return app.Run(); }
+                finally { timer.Stop(); mutex.ReleaseMutex(); }
+            }
+        }
+
+        private static async void RefreshDailyInBackground(AppStore store)
+        {
+            if (Interlocked.Exchange(ref backgroundRefreshPending, 1) != 0) return;
+            try
+            {
+                Settings settings = store.LoadSettings();
+                PhotoCatalog catalog = new PhotoCatalog(store);
+                catalog.PruneOnlineCache(settings);
+                if (!settings.OnlineEnabled) return;
+                if (catalog.ReadOnlineCache().Exists(p => p.Date == DateTime.Now.ToString("yyyyMMdd"))) return;
+                await catalog.RefreshOnline(CancellationToken.None);
+            }
+            catch (Exception ex) { store.Log(ex); }
+            finally { Interlocked.Exchange(ref backgroundRefreshPending, 0); }
         }
     }
 }
