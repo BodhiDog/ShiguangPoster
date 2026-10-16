@@ -141,6 +141,7 @@ namespace Shiguang
                 else if (arg == "--verify") options.Mode = "verify";
                 else if (arg == "--check-online") options.Mode = "online-check";
                 else if (arg == "--smoke-test") options.Mode = "smoke";
+                else if (arg == "--background") options.Mode = "background";
                 else if (arg == "--enable-login-startup") options.Mode = "enable-login-startup";
                 else if (arg == "--disable-login-startup") options.Mode = "disable-login-startup";
                 else if (arg == "--uninstall") options.Mode = "uninstall";

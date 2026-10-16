@@ -45,14 +45,23 @@ namespace Shiguang
 
         public LoginStartupRegistration(AppStore appStore) { store = appStore; }
         public string InstalledPath { get { return Path.ChangeExtension(Assembly.GetExecutingAssembly().Location, ".exe"); } }
-        private string CommandLine { get { return "\"" + InstalledPath + "\""; } }
+        // Start without a visible configuration window when Windows signs in.
+        private string CommandLine { get { return "\"" + InstalledPath + "\" --background"; } }
+        // This exact command was created by releases before background startup existed.
+        private string LegacyCommandLine { get { return "\"" + InstalledPath + "\""; } }
+
+        private bool IsOurCommandLine(string value)
+        {
+            return String.Equals(value, CommandLine, StringComparison.OrdinalIgnoreCase)
+                || String.Equals(value, LegacyCommandLine, StringComparison.OrdinalIgnoreCase);
+        }
 
         public bool IsEnabled()
         {
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey))
             {
                 string value = key == null ? null : Convert.ToString(key.GetValue(ValueName, null));
-                return String.Equals(value, CommandLine, StringComparison.OrdinalIgnoreCase);
+                return IsOurCommandLine(value);
             }
         }
 
@@ -72,7 +81,7 @@ namespace Shiguang
                 object raw = key.GetValue(ValueName, null);
                 if (raw == null) return true;
                 string value = Convert.ToString(raw);
-                if (!String.Equals(value, CommandLine, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!IsOurCommandLine(value)) return false;
                 key.DeleteValue(ValueName, false);
                 return true;
             }

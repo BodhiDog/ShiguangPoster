@@ -43,7 +43,7 @@ namespace Shiguang
                 {
                     if (toggle.IsChecked == true) loginStartup.Enable();
                     else if (!loginStartup.Disable()) throw new InvalidOperationException("已保留同名但不属于拾光画报的启动项。");
-                    Status(toggle.IsChecked == true ? "已设置为登录 Windows 后自动打开" : "已关闭登录后自动打开");
+                    Status(toggle.IsChecked == true ? "已设置为登录 Windows 后在后台运行" : "已关闭登录后后台运行");
                 }
                 catch (Exception ex)
                 {
@@ -70,7 +70,7 @@ namespace Shiguang
             Ui.Find<StackPanel>(Window, "SettingsPage").Children.Clear();
             StackPanel system = SettingsCard("让风景，在你离开时出现", "启用后由 Windows 在空闲时启动，无需让主窗口一直开着。");
             TextBlock state = Ui.Text(registration.IsEnabled() ? "●  已启用拾光屏保" : "○  拾光屏保尚未启用", 12, "#B8D7B4"); state.Margin = new Thickness(0, 9, 0, 0); system.Children.Add(state);
-            SettingRow(system, "登录 Windows 时打开拾光画报", "登录当前账户后自动打开主窗口，无需管理员权限。", LoginStartupSwitch());
+            SettingRow(system, "登录 Windows 时后台运行拾光画报", "登录当前账户后在后台检查每日壁纸，不显示主窗口，无需管理员权限。", LoginStartupSwitch());
             int currentTimeout = registration.TimeoutMinutes();
             int[] waits = new[] { 1, 3, 5, 10, 15, 30, 60, currentTimeout }.Distinct().OrderBy(v => v).ToArray();
             ComboBox idleChoice = new ComboBox(); foreach (int wait in waits) idleChoice.Items.Add(wait + " 分钟"); idleChoice.SelectedIndex = Array.IndexOf(waits, currentTimeout);
@@ -86,7 +86,7 @@ namespace Shiguang
                     try { loginStartup.Enable(); }
                     catch (Exception startupException) { store.Log(startupException); BuildSettings(); Status("屏保已启用，但无法设置登录启动：" + startupException.Message); return; }
                     BuildSettings();
-                    Status("已启用 · 空闲 " + waits[idleChoice.SelectedIndex] + " 分钟后自动播放，并会在登录后打开拾光画报");
+                    Status("已启用 · 空闲 " + waits[idleChoice.SelectedIndex] + " 分钟后自动播放，并会在登录后后台运行拾光画报");
                 }
                 catch (Exception ex) { store.Log(ex); Status("无法启用系统屏保：" + ex.Message); }
             };
